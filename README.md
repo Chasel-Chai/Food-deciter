@@ -1,5 +1,4 @@
 # Food-deciter[今天吃什么.html](https://github.com/user-attachments/files/24226328/default.html)
-<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
