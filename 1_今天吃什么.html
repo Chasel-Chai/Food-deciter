@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今天吃什么？| 美食决策助手</title>
+    <style>
+        /* 全局变量 - 更细腻的色彩体系 */
+        :root {
+            /* 主色：暖橙（美食主题） */
+            --primary: #FF8A4C;
+            --primary-light: #FFA270;
+            --primary-dark: #E87030;
+            --primary-gradient: linear-gradient(135deg, #FF8A4C 0%, #FF5D17 100%);
+            /* 辅助色：清新蓝（交互元素） */
+            --secondary: #5B9BD5;
+            --secondary-light: #7CB0E0;
+            --secondary-gradient: linear-gradient(135deg, #5B9BD5 0%, #3A7BC8 100%);
+            /* 中性色 */
+            --bg-main: #FFF9F5;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --bg-tag: rgba(255, 138, 76, 0.1);
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --text-light: #999999;
+            --border-light: rgba(255, 138, 76, 0.2);
+            /* 效果参数 */
+            --shadow-xs: 0 1px 2px rgba(255, 138, 76, 0.05);
+            --shadow-sm: 0 2px 4px rgba(255, 138, 76, 0.08);
+            --shadow-md: 0 4px 12px rgba(255, 138, 76, 0.12);
+            --shadow-lg: 0 8px 20px rgba(255, 138, 76, 0.15);
+            --radius-xs: 6px;
+            --radius-sm: 10px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-full: 50px;
+            --transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            --transition-fast: all 0.2s ease;
+        }
+
+        /* 全局重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
+        }
+
+        /* 页面背景 - 渐变+纹理 */
+        body {
+            background: var(--bg-main);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 138, 76, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(91, 155, 213, 0.05) 0%, transparent 20%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* 主卡片 - 磨砂玻璃+渐变边框+立体阴影 */
+        .container {
+            width: 100%;
+            max-width: 580px;
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: 40px 32px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        /* 卡片顶部渐变装饰 */
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        /* 卡片角落装饰元素 */
+        .container::after {
+            content: '🍜';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 40px;
+            opacity: 0.1;
+            transform: rotate(15deg);
+        }
+
+        /* 标题样式 - 精致排版+动态emoji */
+        h1 {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-align: center;
+            margin-bottom: 36px;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            position: relative;
+        }
+
+        h1 span {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        h1 .emoji {
+            animation: bounce 2s infinite ease-in-out;
+        }
+
+        /* 添加菜品区域 - 更精致的布局 */
+        .add-food {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        #food-input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.6);
+            outline: none;
+            transition: var(--transition);
+            box-shadow: var(--shadow-xs);
+        }
+
+        #food-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(255, 138, 76, 0.1);
+            background: #fff;
+            transform: translateY(-1px);
+        }
+
+        #food-input::placeholder {
+            color: var(--text-light);
+            font-size: 15px;
+        }
+
+        /* 按钮通用样式 */
+        button {
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 按钮点击波纹效果 */
+        button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        button:active::after {
+            width: 200px;
+            height: 200px;
+            opacity: 0;
+        }
+
+        /* 添加按钮 */
+        .add-btn {
+            padding: 16px 28px;
+            background: var(--secondary-gradient);
+            color: #fff;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .add-btn:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #4A8BC8 0%, #2A6BB0 100%);
+        }
+
+        .add-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 随机按钮 - 更醒目的设计 */
+        .random-btn {
+            width: 100%;
+            padding: 20px;
+            font-size: 20px;
+            color: #fff;
+            background: var(--primary-gradient);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 32px;
+            border-radius: var(--radius-md);
+        }
+
+        .random-btn:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-3px);
+            background: linear-gradient(135deg, #FF7A39 0%, #FF4E00 100%);
+            /* 发光效果 */
+            box-shadow: 0 0 20px rgba(255, 138, 76, 0.3);
+        }
+
+        .random-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 结果区域 - 弹性动画+渐变背景 */
+        .result {
+            text-align: center;
+            font-size: 30px;
+            font-weight: 700;
+            min-height: 52px;
+            margin-bottom: 0; /* 移除底部间距，因为隐藏了菜品列表 */
+            padding: 20px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, rgba(255, 138, 76, 0.05) 0%, rgba(255, 93, 23, 0.05) 100%);
+            border: 1px solid var(--border-light);
+            color: var(--primary-dark);
+            box-shadow: var(--shadow-xs);
+            letter-spacing: 1px;
+            animation: fadeInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* 隐藏菜品列表区域 */
+        .food-list {
+            display: none !important;
+        }
+
+        /* 动画定义 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes roll {
+            0% { transform: translateY(-15px); opacity: 0; }
+            50% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(15px); opacity: 0; }
+        }
+
+        /* 滚动动画增强 */
+        .rolling {
+            animation: roll 0.08s infinite;
+        }
+
+        /* 输入框抖动动画 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* 响应式优化 - 移动端极致适配 */
+        @media (max-width: 500px) {
+            .container {
+                padding: 32px 24px;
+                border-radius: var(--radius-md);
+            }
+
+            h1 {
+                font-size: 28px;
+                margin-bottom: 28px;
+            }
+
+            .add-food {
+                margin-bottom: 24px;
+            }
+
+            #food-input {
+                padding: 14px 16px;
+                font-size: 15px;
+            }
+
+            .add-btn {
+                padding: 14px 20px;
+                font-size: 15px;
+            }
+
+            .random-btn {
+                padding: 18px;
+                font-size: 18px;
+                margin-bottom: 28px;
+            }
+
+            .result {
+                font-size: 26px;
+                padding: 16px;
+                margin-bottom: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <span class="emoji">🍴</span>
+            <span>今天吃什么？</span>
+        </h1>
+
+        <!-- 添加菜品区域 -->
+        <div class="add-food">
+            <input type="text" id="food-input" placeholder="输入想吃的菜品，按回车添加">
+            <button class="add-btn" id="add-btn">
+                <span>添加</span>
+                <span>➕</span>
+            </button>
+        </div>
+
+        <!-- 随机抽取按钮 -->
+        <button class="random-btn" id="random-btn">
+            <span>🎲 帮我决定！</span>
+        </button>
+
+        <!-- 结果展示区域 -->
+        <div class="result" id="result">点击按钮抽取今日美食~</div>
+
+        <!-- 菜品列表区域（已隐藏） -->
+        <div class="food-list">
+            <h3>已添加的菜品：</h3>
+            <div class="food-tags" id="food-tags">
+                <div class="empty-tip">暂无菜品，快来添加你爱吃的美食吧！😋</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化菜品数组（用户提供的完整菜品列表）
+        let foodList = [
+            "重庆火锅", "烤肉", "麻辣烫", "螺蛳粉", "炸鸡", "日料", "日式烤肉", "韩式烤肉", 
+            "海底捞", "小街猪手", "麦当劳", "龙人居", "泰合院", "海鲜大排档", "烧烤", "烤鱼",
+            "拉面", "披萨", "寿司", "酸菜鱼", "汉堡", "椰子鸡火锅", "新疆炒米粉", "湘菜", 
+            "川菜", "老北京炙子烤肉", "铁锅炖", "潮汕牛肉火锅", "铜锅涮肉", "羊蝎子火锅", 
+            "西餐", "粤菜", "黄记煌", "重庆小面", "南京大排档", "犟骨头", "武汉鸭脖"
+        ];
+
+        // 获取DOM元素
+        const foodInput = document.getElementById('food-input');
+        const addBtn = document.getElementById('add-btn');
+        const randomBtn = document.getElementById('random-btn');
+        const result = document.getElementById('result');
+        const foodTags = document.getElementById('food-tags');
+
+        // 渲染菜品列表（虽然隐藏了DOM，但保留函数保证逻辑正常）
+        function renderFoodList() {
+            foodTags.innerHTML = '';
+
+            if (foodList.length === 0) {
+                foodTags.innerHTML = '<div class="empty-tip">暂无菜品，快来添加你爱吃的美食吧！😋</div>';
+                return;
+            }
+
+            foodList.forEach((food, index) => {
+                const tag = document.createElement('div');
+                tag.className = 'food-tag';
+                tag.innerHTML = `
+                    ${food}
+                    <span class="delete-icon" data-index="${index}">×</span>
+                `;
+                // 初始动画（隐藏后无视觉效果，保留不影响）
+                tag.style.opacity = '0';
+                tag.style.transform = 'translateY(10px)';
+                foodTags.appendChild(tag);
+                
+                // 逐帧动画渲染（隐藏后无视觉效果）
+                setTimeout(() => {
+                    tag.style.opacity = '1';
+                    tag.style.transform = 'translateY(0)';
+                }, index * 30);
+
+                // 绑定删除事件（隐藏后无法点击，如需删除功能可后续调整）
+                tag.querySelector('.delete-icon').addEventListener('click', () => {
+                    // 删除前动画（隐藏后无视觉效果）
+                    tag.style.opacity = '0';
+                    tag.style.transform = 'scale(0.9) translateY(5px)';
+                    setTimeout(() => {
+                        foodList.splice(index, 1);
+                        renderFoodList();
+                    }, 200);
+                });
+            });
+        }
+
+        // 添加菜品功能（优化提示）
+        function addFood() {
+            const food = foodInput.value.trim();
+            if (!food) {
+                // 输入框抖动提示
+                foodInput.style.animation = 'shake 0.5s ease';
+                setTimeout(() => {
+                    foodInput.style.animation = '';
+                }, 500);
+                return;
+            }
+            if (foodList.includes(food)) {
+                alert(`"${food}" 已经在列表里啦～换个别的吧😜`);
+                foodInput.value = '';
+                return;
+            }
+            foodList.push(food);
+            foodInput.value = '';
+            renderFoodList();
+            // 添加成功反馈
+            result.textContent = `✅ 已添加美食到备选库！`;
+            setTimeout(() => {
+                result.textContent = '点击按钮抽取今日美食~';
+            }, 1500);
+        }
+
+        // 随机抽取菜品（优化滚动动画+音效模拟）
+        function randomFood() {
+            if (foodList.length === 0) {
+                result.textContent = '⚠️ 还没有添加菜品哦！';
+                return;
+            }
+
+            // 添加滚动动画效果
+            result.classList.add('rolling');
+            result.textContent = '🎲 正在抽取...';
+            
+            // 模拟滚动1.2秒后显示结果（更流畅的动画）
+            let rollCount = 0;
+            const rollInterval = setInterval(() => {
+                const randomIndex = Math.floor(Math.random() * foodList.length);
+                result.textContent = foodList[randomIndex];
+                rollCount++;
+                if (rollCount >= 20) { // 滚动20次后减速停止
+                    clearInterval(rollInterval);
+                    // 最后慢动作
+                    let slowCount = 0;
+                    const slowInterval = setInterval(() => {
+                        const randomIndex = Math.floor(Math.random() * foodList.length);
+                        result.textContent = foodList[randomIndex];
+                        slowCount++;
+                        if (slowCount >= 5) {
+                            clearInterval(slowInterval);
+                            result.classList.remove('rolling');
+                            const finalIndex = Math.floor(Math.random() * foodList.length);
+                            result.textContent = `🎉 就吃：${foodList[finalIndex]}！`;
+                            // 结果弹出动画
+                            result.style.transform = 'scale(1.05)';
+                            setTimeout(() => {
+                                result.style.transform = 'scale(1)';
+                            }, 300);
+                        }
+                    }, 150);
+                }
+            }, 60);
+        }
+
+        // 初始化渲染（隐藏后无视觉效果，保留保证逻辑）
+        renderFoodList();
+
+        // 绑定事件
+        addBtn.addEventListener('click', addFood);
+        foodInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') addFood();
+        });
+        randomBtn.addEventListener('click', randomFood);
+    </script>
+</body>
+</html>
